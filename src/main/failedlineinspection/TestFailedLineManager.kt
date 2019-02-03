@@ -12,7 +12,6 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.containers.FactoryMap
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.qualifiedClassNameForRendering
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 import java.util.*
 
 /**
@@ -41,12 +40,7 @@ class TestFailedLineManager(project: Project, private val storage: TestStateStor
             }
         }
         val state = info.myRecord
-        val failedMethod = state?.failedMethod?.run {
-            val i = indexOf('$') // because "assertEquals" is stored as "assertEquals$default" in TestStateStorage
-            if (i == -1) this else substring(0, i)
-        }
-        if (state!!.failedLine == -1 || StringUtil.isEmpty(failedMethod)) return null
-        if (failedMethod != expression.referenceExpression()?.text && failedMethod != expression.binaryExpression()?.operationReference?.text) return null
+        if (state!!.failedLine == -1 || StringUtil.isEmpty(state.failedMethod)) return null
         if (state.failedLine != document.getLineNumber(expression.textOffset) + 1) return null
         info.myPointer = SmartPointerManager.createPointer(expression)
         return info.myRecord
@@ -54,9 +48,6 @@ class TestFailedLineManager(project: Project, private val storage: TestStateStor
 
     private fun findTestInfo(ktNamedFunction: KtNamedFunction): TestInfo? {
         val ktClass = PsiTreeUtil.getParentOfType(ktNamedFunction, KtClass::class.java) ?: return null
-//        val framework = TestFrameworks.detectFramework(psiClass)
-//        if (framework == null || !framework.isTestMethod(ktNamedFunction, false)) return null
-
         val url = "java:test://" + ktClass.qualifiedClassNameForRendering() + "/" + ktNamedFunction.name
         val state = storage.getState(url) ?: return null
 
@@ -78,9 +69,6 @@ class TestFailedLineManager(project: Project, private val storage: TestStateStor
     private class TestInfo(var myRecord: TestStateStorage.Record?) {
         var myPointer: SmartPsiElementPointer<PsiElement>? = null
     }
-
-    private fun KtExpression.binaryExpression(): KtBinaryExpression? =
-        if (this is KtBinaryExpression) this else null
 
     companion object {
         fun getInstance(project: Project) =
