@@ -1,0 +1,24 @@
+<idea-plugin>
+    <id>Failed Line Inspection for Kotlin</id>
+    <name>Failed Line Inspection for Kotlin</name>
+    <version>0.1</version>
+    <vendor email="dmitry.kandalov [at] gmail.com" url="https://github.com/dkandalov/kotlin-failed-line-inspection">Dmitry Kandalov</vendor>
+
+    <!-- http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html -->
+    <!-- since IJ 2016.1 -->
+    <idea-version since-build="145.0"/>
+
+    <!-- http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html -->
+    <depends>com.intellij.modules.platform</depends>
+    <depends>org.jetbrains.kotlin</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <localInspection groupPath="Kotlin" language="kotlin" shortName="TestFailedLineKotlin"
+                         enabledByDefault="true" level="WARNING"
+                         groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues"
+                         displayName="Highlight problem line in Kotlin test"
+                         implementationClass="failedlineinspection.TestFailedLineInspection"/>
+        <projectService serviceImplementation="failedlineinspection.TestFailedLineManager"/>
+    </extensions>
+
+</idea-plugin>
