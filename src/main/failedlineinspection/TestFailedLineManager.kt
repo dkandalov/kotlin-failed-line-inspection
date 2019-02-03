@@ -15,7 +15,10 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 import java.util.*
 
-class TestFailedLineManager(project: Project, private val myStorage: TestStateStorage): FileEditorManagerListener {
+/**
+ * Based on [com.intellij.testIntegration.TestFailedLineManager].
+ */
+class TestFailedLineManager(project: Project, private val storage: TestStateStorage): FileEditorManagerListener {
     private val myMap: MutableMap<VirtualFile, MutableMap<String, TestInfo>> = FactoryMap.create { HashMap() }
 
     init {
@@ -55,7 +58,7 @@ class TestFailedLineManager(project: Project, private val myStorage: TestStateSt
 //        if (framework == null || !framework.isTestMethod(ktNamedFunction, false)) return null
 
         val url = "java:test://" + ktClass.qualifiedClassNameForRendering() + "/" + ktNamedFunction.name
-        val state = myStorage.getState(url) ?: return null
+        val state = storage.getState(url) ?: return null
 
         val file = ktNamedFunction.containingFile.virtualFile
         val map = myMap[file]!!
@@ -69,7 +72,7 @@ class TestFailedLineManager(project: Project, private val myStorage: TestStateSt
 
     override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
         val map = myMap.remove(file)
-        map?.forEach { s, info -> myStorage.writeState(s, info.myRecord) }
+        map?.forEach { s, info -> storage.writeState(s, info.myRecord) }
     }
 
     private class TestInfo(var myRecord: TestStateStorage.Record?) {

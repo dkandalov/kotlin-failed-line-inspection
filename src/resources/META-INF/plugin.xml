@@ -5,8 +5,8 @@
     <vendor email="dmitry.kandalov [at] gmail.com" url="https://github.com/dkandalov/kotlin-failed-line-inspection">Dmitry Kandalov</vendor>
 
     <!-- http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html -->
-    <!-- since IJ 2016.1 -->
-    <idea-version since-build="145.0"/>
+    <!-- since IJ 2018.2 because older versions have out-of-date TestStateStorage implementation -->
+    <idea-version since-build="182.0"/>
 
     <!-- http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html -->
     <depends>com.intellij.modules.platform</depends>
@@ -20,5 +20,4 @@
                          implementationClass="failedlineinspection.TestFailedLineInspection"/>
         <projectService serviceImplementation="failedlineinspection.TestFailedLineManager"/>
     </extensions>
-
 </idea-plugin>

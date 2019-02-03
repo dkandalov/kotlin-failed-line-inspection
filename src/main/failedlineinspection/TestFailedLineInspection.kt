@@ -24,17 +24,15 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
+/**
+ * Based on [com.intellij.execution.testframework.TestFailedLineInspection].
+ */
 class TestFailedLineInspection: LocalInspectionTool() {
-
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object: KtVisitorVoid() {
-            override fun visitCallExpression(expression: KtCallExpression) {
-                checkAssertionFailureAt(expression)
-            }
+            override fun visitCallExpression(expression: KtCallExpression) = checkAssertionFailureAt(expression)
 
-            override fun visitBinaryExpression(expression: KtBinaryExpression) {
-                checkAssertionFailureAt(expression)
-            }
+            override fun visitBinaryExpression(expression: KtBinaryExpression) = checkAssertionFailureAt(expression)
 
             private fun checkAssertionFailureAt(expression: KtExpression) {
                 val state = TestFailedLineManager.getInstance(expression.project).getFailedLineState(expression) ?: return
