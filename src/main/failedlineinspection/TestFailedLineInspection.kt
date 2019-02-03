@@ -41,8 +41,10 @@ class TestFailedLineInspection: LocalInspectionTool() {
                     DebugFailedTestFix(expression, state.topStacktraceLine),
                     RunActionFix(expression, DefaultRunExecutor.EXECUTOR_ID)
                 )
+                // Drop "AssertionError" because it's the most common error.
+                val errorMessage = state.errorMessage.removePrefix("java.lang.AssertionError: ")
                 val descriptor = InspectionManager.getInstance(expression.project)
-                    .createProblemDescriptor(expression, state.errorMessage, isOnTheFly, fixes, GENERIC_ERROR_OR_WARNING)
+                    .createProblemDescriptor(expression, errorMessage, isOnTheFly, fixes, GENERIC_ERROR_OR_WARNING)
                 descriptor.setTextAttributes(CodeInsightColors.RUNTIME_ERROR)
                 holder.registerProblem(descriptor)
             }
