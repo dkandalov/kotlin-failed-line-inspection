@@ -7,11 +7,18 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.*
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.containers.FactoryMap
+import org.jetbrains.kotlin.idea.editor.fixers.endLine
+import org.jetbrains.kotlin.idea.editor.fixers.startLine
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.qualifiedClassNameForRendering
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtNamedFunction
 import java.util.*
 
 /**
@@ -32,16 +39,15 @@ class TestFailedLineManager(project: Project, private val storage: TestStateStor
         if (info.myPointer != null) {
             val element = info.myPointer!!.element
             if (element != null) {
-                if (expression === element) {
+                return if (expression !== element) null else {
                     info.myRecord!!.failedLine = document.getLineNumber(expression.textOffset) + 1
-                    return info.myRecord
+                    info.myRecord
                 }
-                return null
             }
         }
         val state = info.myRecord
         if (state!!.failedLine == -1 || StringUtil.isEmpty(state.failedMethod)) return null
-        if (state.failedLine != document.getLineNumber(expression.textOffset) + 1) return null
+        if (state.failedLine < expression.startLine(document) + 1 || state.failedLine > expression.endLine(document) + 1) return null
         info.myPointer = SmartPointerManager.createPointer(expression)
         return info.myRecord
     }

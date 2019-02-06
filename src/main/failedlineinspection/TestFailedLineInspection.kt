@@ -19,10 +19,8 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.psi.KtBinaryExpression
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.psi.*
+import java.util.*
 
 /**
  * Based on [com.intellij.execution.testframework.TestFailedLineInspection].
@@ -30,13 +28,29 @@ import org.jetbrains.kotlin.psi.KtVisitorVoid
 class TestFailedLineInspection: LocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object: KtVisitorVoid() {
-            override fun visitCallExpression(expression: KtCallExpression) = checkAssertionFailureAt(expression)
+            private val visited = IdentityHashMap<KtExpression, Unit>()
 
-            override fun visitBinaryExpression(expression: KtBinaryExpression) = checkAssertionFailureAt(expression)
+            override fun visitCallExpression(expression: KtCallExpression) =
+                checkAssertionFailureAt(expression.findParentExpression())
+
+            // Need to visit KtBinaryExpressions because `1 shouldEqual 2` doesn't contain KtCallExpressions
+            override fun visitBinaryExpression(expression: KtBinaryExpression) =
+                checkAssertionFailureAt(expression.findParentExpression())
+
+            // Search for the topmost expression before KtBlockExpression because visitor visits tree bottom-up
+            // but it makes more sense to highlight the topmost expression which will more closely correspond
+            // to the line with failed assertion.
+            private tailrec fun KtExpression.findParentExpression(): KtExpression {
+                val parentElement = parent
+                return if (parentElement is KtExpression && parentElement !is KtBlockExpression)
+                    parentElement.findParentExpression()
+                else this
+            }
 
             private fun checkAssertionFailureAt(expression: KtExpression) {
-                val state = TestFailedLineManager.getInstance(expression.project).getFailedLineState(expression) ?: return
+                if (visited.put(expression, Unit) != null) return
 
+                val state = TestFailedLineManager.getInstance(expression.project).getFailedLineState(expression) ?: return
                 val fixes = arrayOf<LocalQuickFix>(
                     DebugFailedTestFix(expression, state.topStacktraceLine),
                     RunActionFix(expression, DefaultRunExecutor.EXECUTOR_ID)
