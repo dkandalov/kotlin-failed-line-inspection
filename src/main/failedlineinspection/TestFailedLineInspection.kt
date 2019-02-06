@@ -92,9 +92,8 @@ class TestFailedLineInspection: LocalInspectionTool() {
             return UIUtil.removeMnemonic(text)
         }
 
-        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        override fun applyFix(project: Project, descriptor: ProblemDescriptor) =
             ExecutionUtil.runConfiguration(myConfiguration!!, myExecutor)
-        }
 
         override fun getIcon(flags: Int) = myExecutor.icon
     }

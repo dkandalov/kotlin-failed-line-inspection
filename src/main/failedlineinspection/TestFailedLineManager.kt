@@ -34,15 +34,13 @@ class TestFailedLineManager(project: Project, private val storage: TestStateStor
     fun getFailedLineState(expression: KtExpression): TestStateStorage.Record? {
         val ktNamedFunction = PsiTreeUtil.getParentOfType(expression, KtNamedFunction::class.java) ?: return null
         val info = findTestInfo(ktNamedFunction) ?: return null
-
         val document = PsiDocumentManager.getInstance(expression.project).getDocument(expression.containingFile) ?: return null
-        if (info.myPointer != null) {
-            val element = info.myPointer!!.element
-            if (element != null) {
-                return if (expression !== element) null else {
-                    info.myRecord!!.failedLine = document.getLineNumber(expression.textOffset) + 1
-                    info.myRecord
-                }
+
+        val element = info.myPointer?.element
+        if (element != null) {
+            return if (expression !== element) null else {
+                info.myRecord!!.failedLine = document.getLineNumber(expression.textOffset) + 1
+                info.myRecord
             }
         }
         val state = info.myRecord
