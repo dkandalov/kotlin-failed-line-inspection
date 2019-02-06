@@ -1,8 +1,8 @@
 <idea-plugin>
     <id>Failed Line Inspection for Kotlin</id>
     <name>Failed Line Inspection for Kotlin</name>
-    <version>0.1</version>
-    <vendor email="dmitry.kandalov [at] gmail.com" url="https://github.com/dkandalov/kotlin-failed-line-inspection">Dmitry Kandalov</vendor>
+    <version>0.1.1</version>
+    <vendor email="dmitry.kandalov [at] gmail.com" url="https://github.com/dkandalov/kotlin-failed-line-inspection">Dmitry <Kan></Kan>dalov</vendor>
 
     <description><![CDATA[
         Inspection for IntelliJ Kotlin plugin to highlight expression with a failed assertion.
@@ -21,7 +21,7 @@
         <localInspection groupPath="Kotlin" language="kotlin" shortName="TestFailedLineKotlin"
                          enabledByDefault="true" level="WARNING"
                          groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues"
-                         displayName="Highlight problem line in Kotlin test"
+                         displayName="Highlight line with failed assertion in Kotlin test"
                          implementationClass="failedlineinspection.TestFailedLineInspection"/>
         <projectService serviceImplementation="failedlineinspection.TestFailedLineManager"/>
     </extensions>
