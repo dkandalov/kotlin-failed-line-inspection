@@ -10,12 +10,12 @@
     ]]></description>
 
     <!-- http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html -->
-    <!-- since IJ 2018.2 because older versions have out-of-date TestStateStorage implementation -->
-    <idea-version since-build="182.5107.41"/>
+    <idea-version since-build="201.6668.113"/>
 
     <!-- http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html -->
     <depends>com.intellij.modules.platform</depends>
     <depends>org.jetbrains.kotlin</depends>
+    <depends>com.intellij.modules.java</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <localInspection groupPath="Kotlin" language="kotlin" shortName="TestFailedLineKotlin"

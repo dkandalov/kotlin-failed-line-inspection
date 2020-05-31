@@ -46,12 +46,12 @@ compileKotlin {
 
 intellij {
 	def ideVersion = System.getenv().getOrDefault("IJ_VERSION",
-			"182.5107.41",
+			"201.6668.113",
 			//"LATEST-EAP-SNAPSHOT"
 	)
 	version ideVersion
+	plugins = ["Kotlin", "java"]
 	downloadSources true
 	sameSinceUntilBuild false
 	updateSinceUntilBuild false
-    plugins = ["Kotlin"]
 }

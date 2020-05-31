@@ -4,9 +4,7 @@ import com.intellij.codeInspection.*
 import com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING
 import com.intellij.debugger.DebuggerManagerEx
 import com.intellij.execution.Executor
-import com.intellij.execution.ExecutorRegistry
 import com.intellij.execution.ProgramRunnerUtil
-import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.executors.DefaultRunExecutor
@@ -52,7 +50,7 @@ class TestFailedLineInspection: LocalInspectionTool() {
 
                 val state = TestFailedLineManager.getInstance(expression.project).getFailedLineState(expression) ?: return
                 val fixes = arrayOf<LocalQuickFix>(
-                    RunActionFix(expression, DefaultRunExecutor.EXECUTOR_ID),
+                    RunActionFix(expression, DefaultRunExecutor.getRunExecutorInstance()),
                     DebugFailedTestFix(expression, state.topStacktraceLine)
                 )
                 // Drop "AssertionError" because it's the most common error.
@@ -67,10 +65,10 @@ class TestFailedLineInspection: LocalInspectionTool() {
 
     private class DebugFailedTestFix(
         element: PsiElement,
-        private val myTopStacktraceLine: String
-    ): RunActionFix(element, DefaultDebugExecutor.EXECUTOR_ID) {
+        private val topStacktraceLine: String
+    ): RunActionFix(element, DefaultDebugExecutor.getDebugExecutorInstance()) {
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            val line = StackTraceLine(project, myTopStacktraceLine)
+            val line = StackTraceLine(project, topStacktraceLine)
             val location = line.getMethodLocation(project)
             if (location != null) {
                 val document = PsiDocumentManager.getInstance(project).getDocument(location.psiElement.containingFile)
@@ -82,20 +80,19 @@ class TestFailedLineInspection: LocalInspectionTool() {
         }
     }
 
-    private open class RunActionFix(element: PsiElement, executorId: String): LocalQuickFix, Iconable {
-        private val myContext: ConfigurationContext = ConfigurationContext(element)
-        private val myExecutor: Executor = ExecutorRegistry.getInstance().getExecutorById(executorId)
-        private val myConfiguration: RunnerAndConfigurationSettings? = myContext.configuration
+    private open class RunActionFix(element: PsiElement, private val executor: Executor): LocalQuickFix, Iconable {
+        private val context = ConfigurationContext(element)
+        private val configuration = context.configuration!!
 
         @Nls(capitalization = Nls.Capitalization.Sentence)
         override fun getFamilyName(): String {
-            val text = myExecutor.getStartActionText(ProgramRunnerUtil.shortenName(myConfiguration!!.name, 0))
+            val text = executor.getStartActionText(ProgramRunnerUtil.shortenName(configuration.name, 0))
             return UIUtil.removeMnemonic(text)
         }
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) =
-            ExecutionUtil.runConfiguration(myConfiguration!!, myExecutor)
+            ExecutionUtil.runConfiguration(configuration, executor)
 
-        override fun getIcon(flags: Int) = myExecutor.icon
+        override fun getIcon(flags: Int) = executor.icon
     }
 }
