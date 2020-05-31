@@ -1,8 +1,8 @@
 <idea-plugin>
     <id>Failed Line Inspection for Kotlin</id>
     <name>Failed Line Inspection for Kotlin</name>
-    <version>0.1.1</version>
-    <vendor email="dmitry.kandalov [at] gmail.com" url="https://github.com/dkandalov/kotlin-failed-line-inspection">Dmitry <Kan></Kan>dalov</vendor>
+    <version>0.1.2</version>
+    <vendor email="dmitry.kandalov [at] gmail.com" url="https://github.com/dkandalov/kotlin-failed-line-inspection">Dmitry Kandalov</vendor>
 
     <description><![CDATA[
         Inspection for IntelliJ Kotlin plugin to highlight expression with a failed assertion.
@@ -11,7 +11,7 @@
 
     <!-- http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html -->
     <!-- since IJ 2018.2 because older versions have out-of-date TestStateStorage implementation -->
-    <idea-version since-build="182.0"/>
+    <idea-version since-build="182.5107.41"/>
 
     <!-- http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html -->
     <depends>com.intellij.modules.platform</depends>
