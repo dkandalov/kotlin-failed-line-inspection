@@ -24,8 +24,9 @@ import java.util.*
 /**
  * Based on [com.intellij.testIntegration.TestFailedLineManager].
  */
-class TestFailedLineManager(project: Project, private val storage: TestStateStorage): FileEditorManagerListener {
+class TestFailedLineManager(project: Project): FileEditorManagerListener {
     private val myMap: MutableMap<VirtualFile, MutableMap<String, TestInfo>> = FactoryMap.create { HashMap() }
+    private val storage = TestStateStorage.getInstance(project)
 
     init {
         project.messageBus.connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, this)
