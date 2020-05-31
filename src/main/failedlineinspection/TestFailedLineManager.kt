@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.idea.editor.fixers.endLine
 import org.jetbrains.kotlin.idea.editor.fixers.startLine
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.qualifiedClassNameForRendering
 import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import java.util.*
 
@@ -31,7 +31,7 @@ class TestFailedLineManager(project: Project, private val storage: TestStateStor
         project.messageBus.connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, this)
     }
 
-    fun getFailedLineState(expression: KtExpression): TestStateStorage.Record? {
+    fun getFailedLineState(expression: KtElement): TestStateStorage.Record? {
         val ktNamedFunction = PsiTreeUtil.getParentOfType(expression, KtNamedFunction::class.java) ?: return null
         val info = findTestInfo(ktNamedFunction) ?: return null
         val document = PsiDocumentManager.getInstance(expression.project).getDocument(expression.containingFile) ?: return null

@@ -12,7 +12,7 @@ import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.stacktrace.StackTraceLine
-import com.intellij.openapi.editor.colors.CodeInsightColors
+import com.intellij.openapi.editor.colors.CodeInsightColors.RUNTIME_ERROR
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Iconable
 import com.intellij.psi.PsiDocumentManager
@@ -28,7 +28,7 @@ import java.util.*
 class TestFailedLineInspection: LocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object: KtVisitorVoid() {
-            private val visited = IdentityHashMap<KtExpression, Unit>()
+            private val visited = IdentityHashMap<KtElement, Unit>()
 
             override fun visitCallExpression(expression: KtCallExpression) =
                 checkAssertionFailureAt(expression.findParentExpression())
@@ -40,26 +40,27 @@ class TestFailedLineInspection: LocalInspectionTool() {
             // Search for the topmost expression before KtBlockExpression because visitor visits tree bottom-up
             // but it makes more sense to highlight the topmost expression which will more closely correspond
             // to the line with failed assertion.
-            private tailrec fun KtExpression.findParentExpression(): KtExpression {
-                val parentElement = parent
-                return if (parentElement is KtExpression && parentElement !is KtBlockExpression)
-                    parentElement.findParentExpression()
-                else this
+            private tailrec fun KtElement.findParentExpression(): KtElement {
+                val parentPsi: PsiElement = parent ?: return this
+                if (parentPsi is KtBlockExpression || parentPsi !is KtElement) return this
+                if (parentPsi is KtValueArgument || parentPsi is KtValueArgumentList) return parentPsi.findParentExpression()
+                return parentPsi.findParentExpression()
             }
 
-            private fun checkAssertionFailureAt(expression: KtExpression) {
+            private fun checkAssertionFailureAt(expression: KtElement) {
                 if (visited.put(expression, Unit) != null) return
 
                 val state = TestFailedLineManager.getInstance(expression.project).getFailedLineState(expression) ?: return
                 val fixes = arrayOf<LocalQuickFix>(
-                    DebugFailedTestFix(expression, state.topStacktraceLine),
-                    RunActionFix(expression, DefaultRunExecutor.EXECUTOR_ID)
+                    RunActionFix(expression, DefaultRunExecutor.EXECUTOR_ID),
+                    DebugFailedTestFix(expression, state.topStacktraceLine)
                 )
                 // Drop "AssertionError" because it's the most common error.
                 val errorMessage = state.errorMessage.removePrefix("java.lang.AssertionError: ")
                 val descriptor = InspectionManager.getInstance(expression.project)
                     .createProblemDescriptor(expression, errorMessage, isOnTheFly, fixes, GENERIC_ERROR_OR_WARNING)
-                descriptor.setTextAttributes(CodeInsightColors.RUNTIME_ERROR)
+
+                descriptor.setTextAttributes(RUNTIME_ERROR)
                 holder.registerProblem(descriptor)
             }
         }
