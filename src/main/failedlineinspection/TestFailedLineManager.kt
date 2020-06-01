@@ -36,38 +36,40 @@ class TestFailedLineManager(project: Project) {
         })
     }
 
-    fun getFailedLineState(ktElement: KtElement): TestStateStorage.Record? {
+    fun findTestFailureAt(ktElement: KtElement): TestStateStorage.Record? {
         val ktNamedFunction = PsiTreeUtil.getParentOfType(ktElement, KtNamedFunction::class.java) ?: return null
-        val info = findOrSetTestInfo(ktNamedFunction) ?: return null
+        val testInfo = findOrSetTestInfo(ktNamedFunction) ?: return null
         val document = PsiDocumentManager.getInstance(ktElement.project).getDocument(ktElement.containingFile) ?: return null
 
-        val pointedElement = info.elementPointer?.element
-        return if (pointedElement != null) {
-            if (ktElement === pointedElement) {
-                info.record.failedLine = document.getLineNumber(ktElement.textOffset) + 1
-                info.record
-            } else null
-        } else {
-            val state = info.record
-            if (state.failedLine == -1 || state.failedMethod.isNullOrEmpty()) return null
-            if (state.failedLine < ktElement.startLine(document) + 1 || state.failedLine > ktElement.endLine(document) + 1) return null
-            info.elementPointer = SmartPointerManager.createPointer(ktElement)
-            info.record
+        val pointedElement = testInfo.elementPointer?.element
+        return when {
+            pointedElement == null       -> {
+                val state = testInfo.record
+                if (state.failedLine == -1 || state.failedMethod.isNullOrEmpty()) return null
+                if (state.failedLine < ktElement.startLine(document) + 1 || state.failedLine > ktElement.endLine(document) + 1) return null
+                testInfo.elementPointer = SmartPointerManager.createPointer(ktElement)
+                testInfo.record
+            }
+            pointedElement === ktElement -> {
+                testInfo.record.failedLine = document.getLineNumber(ktElement.textOffset) + 1
+                testInfo.record
+            }
+            else                         -> null
         }
     }
 
     private fun findOrSetTestInfo(ktNamedFunction: KtNamedFunction): TestInfo? {
         val ktClass = PsiTreeUtil.getParentOfType(ktNamedFunction, KtClass::class.java) ?: return null
-        val url = "java:test://" + ktClass.qualifiedClassNameForRendering() + "/" + ktNamedFunction.name
-        val state = storage.getState(url) ?: return null
+        val url = "java:test://" + ktClass.qualifiedClassNameForRendering() + "." + ktNamedFunction.name
+        val record = storage.getState(url) ?: return null
 
         val map = myMap[ktNamedFunction.containingFile.virtualFile]!!
-        var info: TestInfo? = map[url]
-        if (info == null || state.date != info.record.date) {
-            info = TestInfo(state)
-            map[url] = info
+        var testInfo = map[url]
+        if (testInfo == null || record.date != testInfo.record.date) {
+            testInfo = TestInfo(record)
+            map[url] = testInfo
         }
-        return info
+        return testInfo
     }
 
     private class TestInfo(

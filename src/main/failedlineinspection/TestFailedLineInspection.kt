@@ -26,7 +26,8 @@ import java.util.*
 class TestFailedLineInspection: LocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object: KtVisitorVoid() {
-            private val visited = IdentityHashMap<KtElement, Unit>()
+            val visited = IdentityHashMap<KtElement, Unit>()
+            val failedLineManager = TestFailedLineManager.getInstance(holder.project)
 
             override fun visitCallExpression(expression: KtCallExpression) =
                 checkAssertionFailureAt(expression.findParentElement())
@@ -48,13 +49,13 @@ class TestFailedLineInspection: LocalInspectionTool() {
             private fun checkAssertionFailureAt(ktElement: KtElement) {
                 if (visited.put(ktElement, Unit) != null) return
 
-                val state = TestFailedLineManager.getInstance(holder.project).getFailedLineState(ktElement) ?: return
+                val record = failedLineManager.findTestFailureAt(ktElement) ?: return
                 val fixes = arrayOf<LocalQuickFix>(
                     RunActionFix(ktElement, DefaultRunExecutor.getRunExecutorInstance()),
-                    DebugFailedTestFix(ktElement, state.topStacktraceLine)
+                    DebugFailedTestFix(ktElement, record.topStacktraceLine)
                 )
                 // Drop "AssertionError" because it's the most common error.
-                val errorMessage = state.errorMessage.removePrefix("java.lang.AssertionError: ")
+                val errorMessage = record.errorMessage.removePrefix("java.lang.AssertionError: ")
                 val descriptor = InspectionManager.getInstance(holder.project)
                     .createProblemDescriptor(ktElement, errorMessage, isOnTheFly, fixes, GENERIC_ERROR_OR_WARNING)
 
