@@ -36,23 +36,24 @@ class TestFailedLineManager(project: Project) {
         })
     }
 
-    fun getFailedLineState(expression: KtElement): TestStateStorage.Record? {
-        val ktNamedFunction = PsiTreeUtil.getParentOfType(expression, KtNamedFunction::class.java) ?: return null
+    fun getFailedLineState(ktElement: KtElement): TestStateStorage.Record? {
+        val ktNamedFunction = PsiTreeUtil.getParentOfType(ktElement, KtNamedFunction::class.java) ?: return null
         val info = findOrSetTestInfo(ktNamedFunction) ?: return null
-        val document = PsiDocumentManager.getInstance(expression.project).getDocument(expression.containingFile) ?: return null
+        val document = PsiDocumentManager.getInstance(ktElement.project).getDocument(ktElement.containingFile) ?: return null
 
-        val element = info.myPointer?.element
-        if (element != null) {
-            return if (expression !== element) null else {
-                info.myRecord.failedLine = document.getLineNumber(expression.textOffset) + 1
+        val elementAtFailure = info.myPointer?.element
+        return if (elementAtFailure != null) {
+            if (ktElement === elementAtFailure) {
+                info.myRecord.failedLine = document.getLineNumber(ktElement.textOffset) + 1
                 info.myRecord
-            }
+            } else null
+        } else {
+            val state = info.myRecord
+            if (state.failedLine == -1 || state.failedMethod.isNullOrEmpty()) return null
+            if (state.failedLine < ktElement.startLine(document) + 1 || state.failedLine > ktElement.endLine(document) + 1) return null
+            info.myPointer = SmartPointerManager.createPointer(ktElement)
+            info.myRecord
         }
-        val state = info.myRecord
-        if (state.failedLine == -1 || state.failedMethod.isNullOrEmpty()) return null
-        if (state.failedLine < expression.startLine(document) + 1 || state.failedLine > expression.endLine(document) + 1) return null
-        info.myPointer = SmartPointerManager.createPointer(expression)
-        return info.myRecord
     }
 
     private fun findOrSetTestInfo(ktNamedFunction: KtNamedFunction): TestInfo? {
