@@ -29,34 +29,34 @@ class TestFailedLineInspection: LocalInspectionTool() {
             private val visited = IdentityHashMap<KtElement, Unit>()
 
             override fun visitCallExpression(expression: KtCallExpression) =
-                checkAssertionFailureAt(expression.findParentExpression())
+                checkAssertionFailureAt(expression.findParentElement())
 
             // Need to visit KtBinaryExpressions because `1 shouldEqual 2` doesn't contain KtCallExpressions
             override fun visitBinaryExpression(expression: KtBinaryExpression) =
-                checkAssertionFailureAt(expression.findParentExpression())
+                checkAssertionFailureAt(expression.findParentElement())
 
             // Search for the topmost expression before KtBlockExpression because visitor visits tree bottom-up
             // but it makes more sense to highlight the topmost expression which will more closely correspond
             // to the line with failed assertion.
-            private tailrec fun KtElement.findParentExpression(): KtElement {
+            private tailrec fun KtElement.findParentElement(): KtElement {
                 val parentPsi: PsiElement = parent ?: return this
                 if (parentPsi is KtBlockExpression || parentPsi !is KtElement) return this
-                if (parentPsi is KtValueArgument || parentPsi is KtValueArgumentList) return parentPsi.findParentExpression()
-                return parentPsi.findParentExpression()
+                if (parentPsi is KtValueArgument || parentPsi is KtValueArgumentList) return parentPsi.findParentElement()
+                return parentPsi.findParentElement()
             }
 
-            private fun checkAssertionFailureAt(expression: KtElement) {
-                if (visited.put(expression, Unit) != null) return
+            private fun checkAssertionFailureAt(ktElement: KtElement) {
+                if (visited.put(ktElement, Unit) != null) return
 
-                val state = TestFailedLineManager.getInstance(holder.project).getFailedLineState(expression) ?: return
+                val state = TestFailedLineManager.getInstance(holder.project).getFailedLineState(ktElement) ?: return
                 val fixes = arrayOf<LocalQuickFix>(
-                    RunActionFix(expression, DefaultRunExecutor.getRunExecutorInstance()),
-                    DebugFailedTestFix(expression, state.topStacktraceLine)
+                    RunActionFix(ktElement, DefaultRunExecutor.getRunExecutorInstance()),
+                    DebugFailedTestFix(ktElement, state.topStacktraceLine)
                 )
                 // Drop "AssertionError" because it's the most common error.
                 val errorMessage = state.errorMessage.removePrefix("java.lang.AssertionError: ")
                 val descriptor = InspectionManager.getInstance(holder.project)
-                    .createProblemDescriptor(expression, errorMessage, isOnTheFly, fixes, GENERIC_ERROR_OR_WARNING)
+                    .createProblemDescriptor(ktElement, errorMessage, isOnTheFly, fixes, GENERIC_ERROR_OR_WARNING)
 
                 descriptor.setTextAttributes(RUNTIME_ERROR)
                 holder.registerProblem(descriptor)
