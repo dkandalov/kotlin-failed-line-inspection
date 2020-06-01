@@ -31,7 +31,7 @@ class TestFailedLineManager(project: Project) {
         project.messageBus.connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
             override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
                 val map = myMap.remove(file)
-                map?.forEach { s, info -> storage.writeState(s, info.myRecord) }
+                map?.forEach { s, info -> storage.writeState(s, info.record) }
             }
         })
     }
@@ -41,18 +41,18 @@ class TestFailedLineManager(project: Project) {
         val info = findOrSetTestInfo(ktNamedFunction) ?: return null
         val document = PsiDocumentManager.getInstance(ktElement.project).getDocument(ktElement.containingFile) ?: return null
 
-        val elementAtFailure = info.myPointer?.element
-        return if (elementAtFailure != null) {
-            if (ktElement === elementAtFailure) {
-                info.myRecord.failedLine = document.getLineNumber(ktElement.textOffset) + 1
-                info.myRecord
+        val pointedElement = info.elementPointer?.element
+        return if (pointedElement != null) {
+            if (ktElement === pointedElement) {
+                info.record.failedLine = document.getLineNumber(ktElement.textOffset) + 1
+                info.record
             } else null
         } else {
-            val state = info.myRecord
+            val state = info.record
             if (state.failedLine == -1 || state.failedMethod.isNullOrEmpty()) return null
             if (state.failedLine < ktElement.startLine(document) + 1 || state.failedLine > ktElement.endLine(document) + 1) return null
-            info.myPointer = SmartPointerManager.createPointer(ktElement)
-            info.myRecord
+            info.elementPointer = SmartPointerManager.createPointer(ktElement)
+            info.record
         }
     }
 
@@ -63,16 +63,17 @@ class TestFailedLineManager(project: Project) {
 
         val map = myMap[ktNamedFunction.containingFile.virtualFile]!!
         var info: TestInfo? = map[url]
-        if (info == null || state.date != info.myRecord.date) {
+        if (info == null || state.date != info.record.date) {
             info = TestInfo(state)
             map[url] = info
         }
         return info
     }
 
-    private class TestInfo(val myRecord: TestStateStorage.Record) {
-        var myPointer: SmartPsiElementPointer<PsiElement>? = null
-    }
+    private class TestInfo(
+        val record: TestStateStorage.Record,
+        var elementPointer: SmartPsiElementPointer<PsiElement>? = null
+    )
 
     companion object {
         fun getInstance(project: Project) =
