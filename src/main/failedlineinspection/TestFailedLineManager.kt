@@ -48,9 +48,11 @@ class TestFailedLineManager(project: Project) {
                 if (state.failedLine == -1 || state.failedMethod.isNullOrEmpty()) return null
                 if (state.failedLine < ktElement.startLine(document) + 1 || state.failedLine > ktElement.endLine(document) + 1) return null
                 testInfo.elementPointer = SmartPointerManager.createPointer(ktElement)
+                testInfo.originalElementText = ktElement.text
                 testInfo.record
             }
             pointedElement === ktElement -> {
+                if (ktElement.text != testInfo.originalElementText) return null
                 testInfo.record.failedLine = document.getLineNumber(ktElement.textOffset) + 1
                 testInfo.record
             }
@@ -74,7 +76,8 @@ class TestFailedLineManager(project: Project) {
 
     private class TestInfo(
         val record: TestStateStorage.Record,
-        var elementPointer: SmartPsiElementPointer<PsiElement>? = null
+        var elementPointer: SmartPsiElementPointer<PsiElement>? = null,
+        var originalElementText: String? = null
     )
 
     companion object {
