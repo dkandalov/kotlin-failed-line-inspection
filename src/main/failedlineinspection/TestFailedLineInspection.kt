@@ -48,14 +48,14 @@ class TestFailedLineInspection: LocalInspectionTool() {
             private fun checkAssertionFailureAt(expression: KtElement) {
                 if (visited.put(expression, Unit) != null) return
 
-                val state = TestFailedLineManager.getInstance(expression.project).getFailedLineState(expression) ?: return
+                val state = TestFailedLineManager.getInstance(holder.project).getFailedLineState(expression) ?: return
                 val fixes = arrayOf<LocalQuickFix>(
                     RunActionFix(expression, DefaultRunExecutor.getRunExecutorInstance()),
                     DebugFailedTestFix(expression, state.topStacktraceLine)
                 )
                 // Drop "AssertionError" because it's the most common error.
                 val errorMessage = state.errorMessage.removePrefix("java.lang.AssertionError: ")
-                val descriptor = InspectionManager.getInstance(expression.project)
+                val descriptor = InspectionManager.getInstance(holder.project)
                     .createProblemDescriptor(expression, errorMessage, isOnTheFly, fixes, GENERIC_ERROR_OR_WARNING)
 
                 descriptor.setTextAttributes(RUNTIME_ERROR)
