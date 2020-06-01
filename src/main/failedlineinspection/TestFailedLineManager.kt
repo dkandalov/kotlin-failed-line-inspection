@@ -11,7 +11,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.util.containers.FactoryMap
 import org.jetbrains.kotlin.idea.editor.fixers.endLine
 import org.jetbrains.kotlin.idea.editor.fixers.startLine
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.qualifiedClassNameForRendering
@@ -24,7 +23,7 @@ import java.util.*
  * Based on [com.intellij.testIntegration.TestFailedLineManager].
  */
 class TestFailedLineManager(project: Project) {
-    private val myMap: MutableMap<VirtualFile, MutableMap<String, TestInfo>> = FactoryMap.create { HashMap() }
+    private val myMap: MutableMap<VirtualFile, MutableMap<String, TestInfo>> = HashMap()
     private val storage = TestStateStorage.getInstance(project)
 
     init {
@@ -65,7 +64,7 @@ class TestFailedLineManager(project: Project) {
         val url = "java:test://" + ktClass.qualifiedClassNameForRendering() + "." + ktNamedFunction.name
         val record = storage.getState(url) ?: return null
 
-        val map = myMap[ktNamedFunction.containingFile.virtualFile]!!
+        val map = myMap.getOrPut(ktNamedFunction.containingFile.virtualFile, { HashMap() })
         var testInfo = map[url]
         if (testInfo == null || record.date != testInfo.record.date) {
             testInfo = TestInfo(record)
