@@ -61,8 +61,12 @@ class TestFailedLineManager(project: Project) {
 
     private fun findOrSetTestInfo(ktNamedFunction: KtNamedFunction): TestInfo? {
         val ktClass = PsiTreeUtil.getParentOfType(ktNamedFunction, KtClass::class.java) ?: return null
-        val url = "java:test://" + ktClass.qualifiedClassNameForRendering() + "." + ktNamedFunction.name
-        val record = storage.getState(url) ?: return null
+        var url = ideaRunnerUrl(ktClass, ktNamedFunction)
+        var record = storage.getState(url)
+        if (record == null) {
+            url = gradleTestUrl(ktClass, ktNamedFunction)
+            record = storage.getState(url) ?: return null
+        }
 
         val map = myMap.getOrPut(ktNamedFunction.containingFile.virtualFile, { HashMap() })
         var testInfo = map[url]
@@ -72,6 +76,12 @@ class TestFailedLineManager(project: Project) {
         }
         return testInfo
     }
+
+    private fun ideaRunnerUrl(ktClass: KtClass, ktNamedFunction: KtNamedFunction) =
+        "java:test://" + ktClass.qualifiedClassNameForRendering() + "/" + ktNamedFunction.name
+
+    private fun gradleTestUrl(ktClass: KtClass, ktNamedFunction: KtNamedFunction) =
+        "java:test://" + ktClass.qualifiedClassNameForRendering() + "." + ktNamedFunction.name
 
     private class TestInfo(
         val record: TestStateStorage.Record,
