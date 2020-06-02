@@ -3,4 +3,4 @@ Inspection for IntelliJ to highlight Kotlin expression with a failed assertion
 
 ![screenshot]
 
-[screenshot]: https://raw.githubusercontent.com/dkandalov/kotlin-failed-line-inspection/master/screenshot.jpg
+[screenshot]: https://raw.githubusercontent.com/dkandalov/kotlin-failed-line-inspection/master/screenshot.png
