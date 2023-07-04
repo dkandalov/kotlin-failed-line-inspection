@@ -30,7 +30,7 @@ class TestFailedLineManager(project: Project) {
         project.messageBus.connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
             override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
                 val map = myMap.remove(file)
-                map?.forEach { s, info -> storage.writeState(s, info.record) }
+                map?.forEach { (s, info) -> storage.writeState(s, info.record) }
             }
         })
     }
@@ -68,7 +68,7 @@ class TestFailedLineManager(project: Project) {
             record = storage.getState(url) ?: return null
         }
 
-        val map = myMap.getOrPut(ktNamedFunction.containingFile.virtualFile, { HashMap() })
+        val map = myMap.getOrPut(ktNamedFunction.containingFile.virtualFile) { HashMap() }
         var testInfo = map[url]
         if (testInfo == null || record.date != testInfo.record.date) {
             testInfo = TestInfo(record)
